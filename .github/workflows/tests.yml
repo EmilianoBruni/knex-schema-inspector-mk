@@ -1,0 +1,63 @@
+name: Tests
+
+on: [push, pull_request, workflow_dispatch]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20, 22]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: init apt
+        run: sudo apt update
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Starting DB services under docker
+        run: docker compose --file 'docker/docker-compose.yml' up -d
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Fix sqlite pnpm bug
+        run: |
+          pnpm install sqlite3 better-sqlite3
+          cd node_modules/sqlite3; pnpm rebuild
+          cd ../better-sqlite3; pnpm rebuild
+
+      - name: Wait for mysql DB services to be ready
+        run: |
+          while ! docker compose --file 'docker/docker-compose.yml' logs mysql | grep -q 'mysqld: ready for connections.'; do sleep 2; done
+
+      - name: Wait for postgres DB services to be ready
+        run: |
+          while ! docker compose --file 'docker/docker-compose.yml' logs postgres | grep -q 'database system is ready to accept connections'; do sleep 2; done
+
+      - name: Wait for mssql DB services to be ready
+        run: |
+          while ! docker compose --file 'docker/docker-compose.yml' logs mssql | grep -q 'SQL Server is now ready for client connections'; do sleep 2; done
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Stop DB services
+        run: docker compose --file 'docker/docker-compose.yml' down

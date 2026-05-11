@@ -1,0 +1,42 @@
+# config 
+ARG IDIR
+# development|production
+ARG BMODE=development
+
+# 01a - base image
+FROM ebruni/pnpm AS base
+ARG IDIR
+# add node_modules executables to PATH
+ENV PATH="/ws/${IDIR}/node_modules/.bin:${PATH}"
+
+# 02a - Install dependencies only when package.json changes
+FROM base AS deps
+ARG IDIR
+ARG BMODE
+ENV NODE_ENV=${BMODE}
+WORKDIR /ws/${IDIR}
+# Install dependencies based on the preferred package manager
+COPY --chown=node:node . ./
+RUN --mount=type=cache,id=ksi_pnpm-store,uid=1000,gid=1000,target=/home/node/pnpm/store [ -e pnpm-lock.yaml ] && pnpm install --frozen-lockfile || pnpm install
+
+# 03a - Rebuild the source code only when needed
+FROM base AS builder
+ARG IDIR
+ARG BMODE
+ENV NODE_ENV=${BMODE}
+WORKDIR /ws/${IDIR}
+COPY --chown=node:node . ./
+COPY --chown=node:node --from=deps ws/${IDIR}/pnpm-lock.yaml* .
+COPY --chown=node:node --from=deps ws/${IDIR}/node_modules ./node_modules
+
+# 04a - Production image
+FROM base AS runner
+ARG IDIR
+ARG BMODE
+ENV NODE_ENV=\${BMODE}
+WORKDIR /ws/${IDIR}
+
+COPY --from=builder ws/${IDIR}/node_modules ./node_modules
+COPY --from=builder ws/${IDIR}/package.json ws/${IDIR}/pnpm-lock.yaml* ./
+
+CMD [""]
