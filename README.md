@@ -1,6 +1,8 @@
-# knex-schema-inspector
+# knex-schema-inspector-mk
 
 Utility for extracting information about existing DB schema
+
+This is a fork of [knex-schema-inspector](https://github.com/knex/knex-schema-inspector) with [these](https://github.com/EmilianoBruni/knex-schema-inspector) changes which are in a ignored [PR](https://github.com/knex/knex-schema-inspector/pull/154).
 
 This library currently supports CockroachDB, Postgres, MySQL, MS SQL, SQLite, and OracleDB. We aim to have support for the same databases as the main knex project.
 
@@ -9,11 +11,11 @@ This library currently supports CockroachDB, Postgres, MySQL, MS SQL, SQLite, an
 Install the package through NPM or Yarn:
 
 ```
-npm install knex-schema-inspector
+npm install knex-schema-inspector-mk
 ```
 
 ```
-yarn add knex-schema-inspector
+yarn add knex-schema-inspector-mk
 ```
 
 ## Usage
