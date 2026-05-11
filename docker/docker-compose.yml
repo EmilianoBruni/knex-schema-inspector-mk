@@ -81,7 +81,7 @@ services:
       - '8080:8080'
 
   cockroachdb-init:
-    image: cockroachdb/cockroach:latest-v21.2
+    image: cockroachdb/cockroach:latest-v22.2
     volumes:
       - ../test/seed/cockroachdb.sql:/seed.sql
       - ../test/scripts/cockroachdb-init.sh:/init.sh
